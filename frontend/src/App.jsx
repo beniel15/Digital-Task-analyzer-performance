@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Target, Trophy, Star } from 'lucide-react';
 
 // Components
@@ -29,14 +29,53 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [authToken, setAuthToken] = useState(null);
 
+  // Check for saved auth state on mount and listen for auth changes
+  useEffect(() => {
+    // Check localStorage for saved auth state
+    const savedToken = localStorage.getItem('authToken');
+    const savedRole = localStorage.getItem('userRole');
+    const savedPage = localStorage.getItem('currentPage');
+
+    if (savedToken && savedRole && savedPage) {
+      setAuthToken(savedToken);
+      setUserRole(savedRole);
+      setCurrentPage(savedPage);
+    }
+
+    // Listen for Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // User signed out, clear localStorage and reset state
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('currentPage');
+        setAuthToken(null);
+        setUserRole(null);
+        setCurrentPage('role-selection');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const handleMentorLogin = (token, user) => {
     setAuthToken(token);
+    setUserRole('mentor');
     setCurrentPage('mentor-dashboard');
+    // Save to localStorage
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('userRole', 'mentor');
+    localStorage.setItem('currentPage', 'mentor-dashboard');
   };
 
   const handleStudentLogin = (token, user) => {
     setAuthToken(token);
+    setUserRole('student');
     setCurrentPage('student-dashboard');
+    // Save to localStorage
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('userRole', 'student');
+    localStorage.setItem('currentPage', 'student-dashboard');
   };
 
   const handleLogout = () => {
@@ -44,6 +83,10 @@ function App() {
     setAuthToken(null);
     setUserRole(null);
     setCurrentPage('role-selection');
+    // Clear localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('currentPage');
   };
 
   const goBack = () => {

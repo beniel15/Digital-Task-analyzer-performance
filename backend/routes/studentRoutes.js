@@ -198,10 +198,11 @@ module.exports = (pool) => {
 
       const student_id = students[0].id;
       const oldPoints = students[0].reward_points;
+      const newTotalPoints = oldPoints + parseInt(allocated_points);
 
-      console.log('📝 Updating student:', { student_id, oldPoints });
+      console.log('📝 Updating student:', { student_id, oldPoints, allocated_points, newTotalPoints });
 
-      // Update student details
+      // Update student details - accumulate points
       await pool.execute(
         `UPDATE students SET 
          completed_levels = ?, 
@@ -209,7 +210,7 @@ module.exports = (pool) => {
          reward_points = ?, 
          attendance_percentage = ?
          WHERE id = ?`,
-        [completed_levels, skill_completed, allocated_points, attendance_percentage, student_id]
+        [completed_levels, skill_completed, newTotalPoints, attendance_percentage, student_id]
       );
 
       console.log('✅ Student updated successfully');
@@ -217,14 +218,14 @@ module.exports = (pool) => {
       // Log activity
       await pool.execute(
         'INSERT INTO activity_log (student_id, activity_type, activity_description, points_earned) VALUES (?, ?, ?, ?)',
-        [student_id, 'details_updated', 'Student details updated via roll number', allocated_points - oldPoints]
+        [student_id, 'details_updated', 'Student details updated via roll number', parseInt(allocated_points)]
       );
 
       // Recalculate performance score
       await calculatePerformanceScore(pool, student_id);
 
       // Check if badge changed
-      const newBadge = getBadge(allocated_points);
+      const newBadge = getBadge(newTotalPoints);
       const badgeUpgraded = getBadge(oldPoints) !== newBadge;
 
       res.json({
@@ -233,7 +234,8 @@ module.exports = (pool) => {
           roll_no,
           completed_levels,
           skill_completed,
-          allocated_points,
+          allocated_points: parseInt(allocated_points),
+          total_points: newTotalPoints,
           attendance_percentage
         },
         newBadge,

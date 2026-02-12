@@ -23,7 +23,7 @@ module.exports = (pool) => {
           performance_score,
           rank_position
         FROM students
-        ORDER BY performance_score DESC, reward_points DESC
+        ORDER BY reward_points DESC, performance_score DESC
         LIMIT 20`
       );
 
