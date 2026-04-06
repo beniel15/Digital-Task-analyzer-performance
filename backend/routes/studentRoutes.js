@@ -13,6 +13,7 @@ const calculateAveragePoints = async (pool) => {
   }
 };
 
+
 // Helper function to parse skill level
 const parseSkillLevel = (skillString) => {
   if (!skillString) return null;

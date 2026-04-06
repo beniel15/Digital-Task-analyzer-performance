@@ -85,6 +85,10 @@ app.post('/api/auth/register-mentor', async (req, res) => {
 });
 
 // Start server
+app.get('/', (req, res) => {
+  res.send('🚀 Backend is running successfully!');
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🔗 API available at http://localhost:${PORT}`);
