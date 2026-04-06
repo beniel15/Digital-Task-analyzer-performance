@@ -9,10 +9,10 @@ const MentorDashboard = ({ authToken, onLogout }) => {
   // Fetch students on load and set up auto-refresh
   useEffect(() => {
     fetchStudents();
-    
+
     // Set up auto-refresh every 5 seconds
     const interval = setInterval(fetchStudents, 5000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -95,7 +95,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-[#F0FDF4] rounded-xl p-6 text-[#1F2937] shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center justify-between">
               <div>
@@ -107,7 +107,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-[#FFFBEB] rounded-xl p-6 text-[#1F2937] shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center justify-between">
               <div>
@@ -119,7 +119,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-[#FEF2F2] rounded-xl p-6 text-[#1F2937] shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center justify-between">
               <div>
@@ -139,7 +139,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
             <h2 className="text-lg font-semibold text-[#1F2937]">Student Rankings</h2>
             <p className="text-sm text-[#6B7280]">Ranked by total reward points</p>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#F5F7FA] border-b border-[#E5E7EB]">
@@ -147,6 +147,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">Rank</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">Roll No</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">CGPA</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">Skill</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">Completed Levels</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#1F2937] uppercase">Points</th>
@@ -159,29 +160,43 @@ const MentorDashboard = ({ authToken, onLogout }) => {
                 {safeStudents.map((student, index) => (
                   <tr key={student.id} className="hover:bg-[#F5F7FA]">
                     <td className="px-6 py-4">
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                        student.rank <= 3 ? 'bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white' :
-                        'bg-[#FFF9E6] text-[#1F2937]'
-                      }`}>
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${student.rank <= 3 ? 'bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white' :
+                          'bg-[#FFF9E6] text-[#1F2937]'
+                        }`}>
                         {student.rank}
                       </div>
                     </td>
                     <td className="px-6 py-4 font-medium text-[#1F2937]">{student.name}</td>
                     <td className="px-6 py-4 text-[#6B7280]">{student.roll_number}</td>
+                    <td className="px-6 py-4 text-[#6B7280]">{student.cgpa !== null && student.cgpa !== undefined ? parseFloat(student.cgpa).toFixed(2) : '-'}</td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 bg-[#F5F7FA] text-[#1F2937] rounded text-sm">
                         {student.personalized_skill || '-'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-[#6B7280]">{student.completed_levels || '0'}</td>
+                    <td className="px-6 py-4">
+                      {student.completed_levels ? (
+                        <div className="flex flex-wrap gap-1">
+                          {student.completed_levels.split(',').map((level, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 bg-[#EEF2FF] text-[#5B6CFF] rounded text-xs font-medium"
+                            >
+                              {level.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[#6B7280]">-</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 font-bold text-[#1F2937]">{student.reward_points}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        student.badge === 'Diamond' ? 'bg-gradient-to-r from-[#5B6CFF] to-[#7C4DFF] text-white' :
-                        student.badge === 'Platinum' ? 'bg-gradient-to-r from-[#9CA3AF] to-[#6B7280] text-white' :
-                        student.badge === 'Gold' ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white' :
-                        'bg-[#F5F7FA] text-[#1F2937]'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${student.badge === 'Diamond' ? 'bg-gradient-to-r from-[#5B6CFF] to-[#7C4DFF] text-white' :
+                          student.badge === 'Platinum' ? 'bg-gradient-to-r from-[#9CA3AF] to-[#6B7280] text-white' :
+                            student.badge === 'Gold' ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white' :
+                              'bg-[#F5F7FA] text-[#1F2937]'
+                        }`}>
                         {student.badge}
                       </span>
                     </td>
@@ -189,11 +204,10 @@ const MentorDashboard = ({ authToken, onLogout }) => {
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-[#E5E7EB] rounded-full h-1.5 w-20">
                           <div
-                            className={`h-1.5 rounded-full ${
-                              student.performance_score >= 80 ? 'bg-[#22C55E]' :
-                              student.performance_score >= 60 ? 'bg-[#F59E0B]' :
-                              'bg-[#EF4444]'
-                            }`}
+                            className={`h-1.5 rounded-full ${student.performance_score >= 80 ? 'bg-[#22C55E]' :
+                                student.performance_score >= 60 ? 'bg-[#F59E0B]' :
+                                  'bg-[#EF4444]'
+                              }`}
                             style={{ width: `${student.performance_score}%` }}
                           ></div>
                         </div>
@@ -201,8 +215,8 @@ const MentorDashboard = ({ authToken, onLogout }) => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => deleteStudent(student.id)} 
+                      <button
+                        onClick={() => deleteStudent(student.id)}
                         className="text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEE2E2] p-2 rounded transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -268,7 +282,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-[#1F2937]">Add New Student</h2>
-          <button 
+          <button
             onClick={onClose}
             className="text-[#6B7280] hover:text-[#1F2937]"
           >
@@ -285,7 +299,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) => setForm({...form, name: e.target.value})}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
                 placeholder="John Doe"
               />
@@ -295,7 +309,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
               <input
                 type="text"
                 value={form.roll_number}
-                onChange={(e) => setForm({...form, roll_number: e.target.value})}
+                onChange={(e) => setForm({ ...form, roll_number: e.target.value })}
                 className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
                 placeholder="CS2024001"
               />
@@ -308,7 +322,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({...form, email: e.target.value})}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
                 placeholder="student@example.com"
               />
@@ -318,7 +332,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
               <input
                 type="text"
                 value={form.firebase_uid}
-                onChange={(e) => setForm({...form, firebase_uid: e.target.value})}
+                onChange={(e) => setForm({ ...form, firebase_uid: e.target.value })}
                 className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
                 placeholder="Get from Firebase Console"
               />
@@ -330,7 +344,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
             <input
               type="text"
               value={form.personalized_skill}
-              onChange={(e) => setForm({...form, personalized_skill: e.target.value})}
+              onChange={(e) => setForm({ ...form, personalized_skill: e.target.value })}
               className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
               placeholder="React, Python, etc."
             />
@@ -342,7 +356,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
               <input
                 type="number"
                 value={form.reward_points}
-                onChange={(e) => setForm({...form, reward_points: parseInt(e.target.value) || 0})}
+                onChange={(e) => setForm({ ...form, reward_points: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
               />
             </div>
@@ -351,7 +365,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
               <input
                 type="number"
                 value={form.attendance_percentage}
-                onChange={(e) => setForm({...form, attendance_percentage: parseFloat(e.target.value) || 0})}
+                onChange={(e) => setForm({ ...form, attendance_percentage: parseFloat(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
                 max="100"
               />
@@ -366,7 +380,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
             >
               {loading ? 'Adding...' : 'Add Student'}
             </button>
-            <button 
+            <button
               onClick={onClose}
               className="flex-1 border border-[#E5E7EB] py-3 px-4 rounded-lg font-bold hover:bg-[#F5F7FA] transition-colors"
             >

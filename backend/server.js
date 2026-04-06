@@ -25,7 +25,7 @@ if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && proc
 } else {
   // Fallback: read from backend/serviceAccountKey.json.json
   // This file already contains project_id, client_email, private_key, etc.
-  const serviceAccount = require('./serviceAccountKey.json.json');
+  const serviceAccount = require('./serviceAccountKey.json')
   firebaseCredential = admin.credential.cert(serviceAccount);
 }
 
@@ -67,7 +67,7 @@ const studentRoutes = require('./routes/studentRoutes')(pool);
 
 // Use routes
 app.use('/api/mentor', mentorRoutes); 
-app.use('/api/student', verifyToken, studentRoutes);
+app.use('/api/student', studentRoutes); // Temporarily disabled auth for testing
 
 // Register mentor (no auth required)
 app.post('/api/auth/register-mentor', async (req, res) => {

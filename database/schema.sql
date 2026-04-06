@@ -16,6 +16,7 @@ CREATE TABLE students (
     certificate_completion BOOLEAN DEFAULT FALSE,
     reward_points INT DEFAULT 0,
     attendance_percentage DECIMAL(5,2) DEFAULT 0.00,
+    cgpa DECIMAL(3,1) DEFAULT 0.0,
     performance_score DECIMAL(5,2) DEFAULT 0.00,
     rank_position INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

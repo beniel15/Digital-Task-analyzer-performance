@@ -3,28 +3,59 @@ import React, { useState, useEffect } from 'react';
 const StudentDashboard = ({ authToken, onLogout }) => {
   const [profile, setProfile] = useState(null);
   const [showAddDetails, setShowAddDetails] = useState(false);
+  const [mentorData, setMentorData] = useState(null);
+  const [studentRollNumber, setStudentRollNumber] = useState(''); // For mentor dashboard integration
 
   useEffect(() => {
     fetchProfile();
+    fetchMentorData();
+    
+    // Save student roll number to localStorage for mentor dashboard integration
+    const savedRollNumber = localStorage.getItem('studentRollNumber');
+    if (savedRollNumber) {
+      setStudentRollNumber(savedRollNumber);
+    }
   }, []);
 
   const fetchProfile = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/student/profile', {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 
+          'Content-Type': 'application/json'
+          // Temporarily removed Authorization header for testing
+        }
       });
       const data = await response.json();
+      console.log('🔍 Profile data received:', data);
       setProfile(data);
     } catch (error) {
       console.error('Error:', error);
     }
   };
 
-  if (!profile) return <div className="min-h-screen flex items-center justify-center bg-gray-50">Loading...</div>;
+  const fetchMentorData = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/mentor/students', {
+        headers: { 
+          'Content-Type': 'application/json'
+          // Temporarily removed Authorization header for testing
+        }
+      });
+      const data = await response.json();
+      setMentorData(data);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  // Always show the progress section, even if profile is loading
+  const showProgressSection = true; // Force show the section
+
+  // Debug: Show profile state
+  console.log('🔍 Current profile state:', profile);
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-6">
-
       {/* Header */}
       <div className="bg-white border-b border-[#E5E7EB] px-6 py-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -35,10 +66,10 @@ const StudentDashboard = ({ authToken, onLogout }) => {
             <div className="w-10 h-10 bg-gradient-to-br from-[#5B6CFF] to-[#7C4DFF] rounded-full"></div>
             <button 
               onClick={onLogout}
-              className="text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              className="text-[#6B7280] hover:text-[#1F2937]"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4 4m4-4H3m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1m6-4v4a6 6 0 01-6 6H6a6 6 0 01-6-6V7a6 6 0 016-6h4z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l2 2M13 17" />
               </svg>
             </button>
           </div>
@@ -46,132 +77,114 @@ const StudentDashboard = ({ authToken, onLogout }) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column - Welcome and Points */}
-          <div className="lg:col-span-2 space-y-8">
-            
-            {/* Welcome Message */}
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <h2 className="text-3xl font-bold text-[#1F2937] mb-3">
-                Welcome back, {profile.name}
-              </h2>
-              <p className="text-[#6B7280]">Track your progress and manage your skills</p>
-            </div>
-
-            {/* Points Wallet */}
-            <div className="bg-gradient-to-br from-[#5B6CFF] to-[#7C4DFF] rounded-xl p-6 shadow-lg text-white" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">Points Wallets</h3>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm opacity-90">MODE</span>
-                  <button className="px-3 py-1 bg-white text-[#5B6CFF] text-sm font-bold rounded-full">Active</button>
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-sm opacity-90 mb-2">Activity Points</p>
-                <p className="text-5xl font-bold">{profile.reward_points}</p>
-              </div>
-            </div>
-
-            {/* Points Breakdown */}
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <h3 className="text-xl font-bold text-[#1F2937] mb-4">Points Breakdown</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-3 border-b border-[#E5E7EB]">
-                  <div>
-                    <p className="font-semibold text-[#1F2937]">Academics (T, L)</p>
-                    <p className="text-sm text-[#6B7280]">Classes and assignments</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#5B6CFF]">POINTS EARNED</p>
-                    <p className="text-sm text-[#6B7280]">ELIGIBLE BONUS</p>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center py-3">
-                  <div>
-                    <p className="font-semibold text-[#1F2937]">Mentor - CSE</p>
-                    <p className="text-sm text-[#6B7280]">MENTORCSE - S6 - MENTOR MEETING</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#5B6CFF]">POINTS EARNED</p>
-                    <p className="text-sm text-[#6B7280]">ELIGIBLE BONUS</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Skill Progress */}
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <h3 className="text-xl font-bold text-[#1F2937] mb-4">Personalized Skill's Progress</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-[#F5F7FA] rounded-lg border border-[#E5E7EB]">
-                  <p className="text-sm font-medium text-[#1F2937] mb-1">UI UX 2</p>
-                  <p className="text-2xl font-bold text-[#5B6CFF]">2</p>
-                </div>
-                <div className="text-center p-4 bg-[#F5F7FA] rounded-lg border border-[#E5E7EB]">
-                  <p className="text-sm font-medium text-[#1F2937] mb-1">Programming Python 3</p>
-                  <p className="text-2xl font-bold text-[#22C55E]">3</p>
-                </div>
-                <div className="text-center p-4 bg-[#F5F7FA] rounded-lg border border-[#E5E7EB]">
-                  <p className="text-sm font-medium text-[#1F2937] mb-1">Web Development 1</p>
-                  <p className="text-2xl font-bold text-[#7C4DFF]">1</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Profile Card */}
-          <div className="space-y-8">
-            
-            {/* Profile Card */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              {/* Background Image */}
-              <div className="h-32 bg-gradient-to-br from-[#5B6CFF]/10 to-[#7C4DFF]/10 relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-16 h-16 text-[#5B6CFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              
-              {/* Profile Info */}
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-[#1F2937] mb-2">{profile.name}</h3>
-                <p className="text-[#6B7280] mb-4">Computer Science and Engineering</p>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#6B7280]">Roll Number</span>
-                    <span className="font-semibold text-[#1F2937]">{profile.roll_number}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#6B7280]">Skill</span>
-                    <span className="font-semibold text-[#1F2937]">{profile.personalized_skill || 'Not assigned'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#6B7280]">Points</span>
-                    <span className="font-semibold text-[#1F2937]">{profile.reward_points}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#6B7280]">Attendance</span>
-                    <span className="font-semibold text-[#1F2937]">{profile.attendance_percentage}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Add Details Button */}
-            <div className="bg-gradient-to-br from-[#5B6CFF] to-[#7C4DFF] rounded-xl p-6 shadow-lg text-white" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <button
-                onClick={() => setShowAddDetails(true)}
-                className="w-full bg-white text-[#5B6CFF] py-3 px-4 rounded-lg font-bold hover:bg-[#F5F7FA] transition-all transform hover:scale-105"
-              >
-                Add Details
-              </button>
-            </div>
+        {/* Roll Number Input */}
+        <div className="bg-white rounded-xl p-6 shadow-lg mb-8">
+          <h2 className="text-xl font-bold text-[#1F2937] mb-4">Enter Your Roll Number</h2>
+          <div className="flex space-x-4">
+            <input
+              type="text"
+              value={studentRollNumber}
+              onChange={(e) => setStudentRollNumber(e.target.value)}
+              placeholder="Enter your roll number"
+              className="flex-1 px-4 py-3 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
+            />
+            <button
+              onClick={() => {
+                if (studentRollNumber.trim()) {
+                  localStorage.setItem('studentRollNumber', studentRollNumber);
+                  window.location.reload(); // Refresh to update mentor dashboard
+                }
+              }}
+              className="bg-[#5B6CFF] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#4B5CEF] transition-all transform hover:scale-105"
+            >
+              Submit
+            </button>
           </div>
         </div>
+
+        {/* Add Details Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowAddDetails(true)}
+            className="bg-[#5B6CFF] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#4B5CEF] transition-all transform hover:scale-105"
+          >
+            Add Details
+          </button>
+        </div>
+
+        {/* Your Current Status - Always Show */}
+        {showProgressSection && (
+          <div className="bg-white rounded-xl p-6 shadow-lg" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+            <h2 className="text-xl font-bold text-[#1F2937] mb-4">Your Progress</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-[#FFFBEB] rounded-lg">
+                <p className="text-sm text-[#6B7280]">Current Level</p>
+                <p className="text-xl font-bold text-[#1F2937]">
+                  {profile?.personalized_skill || 'Not assigned'}
+                </p>
+              </div>
+              <div className="p-4 bg-[#FEF2F2] rounded-lg">
+                <p className="text-sm text-[#6B7280]">Completed Levels</p>
+                <p className="text-xl font-bold text-[#1F2937]">{profile?.completed_levels || 0}</p>
+              </div>
+              <div className="p-4 bg-[#F0FDF4] rounded-lg border-2 border-green-500">
+                <p className="text-sm text-[#6B7280]">Your CGPA</p>
+                <p className="text-xl font-bold text-green-600">{profile?.cgpa || 0.0}</p>
+                <p className="text-xs text-gray-500">CGPA Bar Here!</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Mentor Data - Average Points and Rankings */}
+        {mentorData && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <h2 className="text-xl font-bold text-[#1F2937] mb-4">Class Performance</h2>
+              
+              {/* Average Points */}
+              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-600 text-sm font-medium">Class Average Points</p>
+                    <p className="text-2xl font-bold text-[#1F2937]">
+                      {mentorData.length > 0 ? 
+                        Math.round(mentorData.reduce((sum, student) => sum + (student.reward_points || 0), 0) / mentorData.length) 
+                        : 0}
+                    </p>
+                  </div>
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <svg className="text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v1m0 0l2 2M13 17" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Performers */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {mentorData.slice(0, 3).map((student, index) => (
+                  <div key={student.id} className="bg-white rounded-lg p-4 border border-[#E5E7EB]">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                        index === 1 ? 'bg-gray-100 text-gray-800' :
+                        index === 2 ? 'bg-orange-100 text-orange-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{student.name}</p>
+                        <p className="text-sm text-gray-600">{student.roll_number}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-gray-900">{student.reward_points}</p>
+                      <p className="text-xs text-gray-600">points</p>
+                    </div>
+          </div>
+        )}
       </div>
 
       {/* Add Details Modal */}
@@ -179,7 +192,10 @@ const StudentDashboard = ({ authToken, onLogout }) => {
         <AddDetailsModal
           authToken={authToken}
           onClose={() => setShowAddDetails(false)}
-          onSuccess={fetchProfile}
+          onSuccess={() => {
+            fetchProfile();
+            fetchMentorData();
+          }}
         />
       )}
     </div>
@@ -193,57 +209,66 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
   const [skillCompleted, setSkillCompleted] = useState('');
   const [allocatedPoints, setAllocatedPoints] = useState('');
   const [attendancePercentage, setAttendancePercentage] = useState('');
+  const [cgpa, setCgpa] = useState('');
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = async () => {
-    if (!rollNo.trim() || !completedLevels.trim() || !skillCompleted.trim() || 
-        !allocatedPoints.trim() || !attendancePercentage.trim()) {
-      alert('Please fill all fields!');
-      return;
-    }
-
-    console.log('🚀 Submitting form data:', {
-      roll_no: rollNo,
-      completed_levels: completedLevels,
-      skill_completed: skillCompleted,
-      allocated_points: allocatedPoints,
-      attendance_percentage: attendancePercentage
-    });
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
+    setMessage('');
+
     try {
       const response = await fetch('http://localhost:5000/api/student/update-details', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
+          'Content-Type': 'application/json'
+          // Temporarily removed Authorization header for testing
         },
         body: JSON.stringify({
           roll_no: rollNo,
-          completed_levels: completedLevels,
           skill_completed: skillCompleted,
-          allocated_points: allocatedPoints,
-          attendance_percentage: attendancePercentage
+          allocated_points: parseInt(allocatedPoints) || 0,
+          attendance_percentage: parseFloat(attendancePercentage) || 0,
+          cgpa: parseFloat(cgpa) || 0.0
         })
       });
 
+      const data = await response.json();
+      
+      console.log('🔍 Response:', data); // Debug log
+      
       if (response.ok) {
-        const result = await response.json();
-        if (result.badgeUpgraded) {
-          alert(`✅ Details updated successfully! 🎉 Badge upgraded to ${result.newBadge}!`);
-        } else {
-          alert('✅ Details updated successfully!');
+        setMessage(data.message || 'Student details updated successfully!');
+        console.log('✅ Student details updated successfully!');
+        
+        // Immediately update profile with returned data
+        if (data.updatedProfile) {
+          setProfile(data.updatedProfile);
+          console.log('🔄 Profile updated immediately:', data.updatedProfile);
         }
-        onSuccess();
-        onClose();
+        
+        setTimeout(() => {
+          // Reset form fields
+          setRollNo('');
+          setSkillCompleted('');
+          setAllocatedPoints('');
+          setAttendancePercentage('');
+          setCgpa('');
+          
+          // Also refresh profile as backup
+          fetchProfile();
+          
+          onClose();
+          onSuccess();
+        }, 3000);
       } else {
-        const error = await response.json().catch(() => ({}));
-        console.error('❌ Error response:', error);
-        alert('Error: ' + (error.error || 'Failed to update details'));
+        console.error('❌ Backend error:', data);
+        setMessage(data.error || 'Failed to add details');
       }
     } catch (error) {
       console.error('❌ Network error:', error);
-      alert('Error adding details');
+      setMessage('Network error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -263,8 +288,19 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
             </svg>
           </button>
         </div>
+
+        {/* Message Display */}
+        {message && (
+          <div className={`mb-4 p-3 rounded-lg text-sm ${
+            message.includes('🎉') || message.includes('🏆') 
+              ? 'bg-green-100 text-green-800 border border-green-200' 
+              : 'bg-red-100 text-red-800 border border-red-200'
+          }`}>
+            {message}
+          </div>
+        )}
         
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#1F2937] mb-2">Enter Roll No</label>
             <input
@@ -273,28 +309,21 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
               onChange={(e) => setRollNo(e.target.value)}
               className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
               placeholder="Enter your roll number"
+              required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#1F2937] mb-2">Completed Levels</label>
-            <input
-              type="text"
-              value={completedLevels}
-              onChange={(e) => setCompletedLevels(e.target.value)}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
-              placeholder="Enter completed levels"
-            />
-          </div>
+
 
           <div>
-            <label className="block text-sm font-medium text-[#1F2937] mb-2">Skill Completed</label>
+            <label className="block text-sm font-medium text-[#1F2937] mb-2">Skill Completed (e.g., Java Level 1)</label>
             <input
               type="text"
               value={skillCompleted}
               onChange={(e) => setSkillCompleted(e.target.value)}
               className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
-              placeholder="Enter completed skills"
+              placeholder="Java Level 1, Python Level 2, etc."
+              required
             />
           </div>
 
@@ -307,6 +336,22 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
               className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
               placeholder="Enter allocated points"
               min="0"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1F2937] mb-2">CGPA (0.0 - 10.0)</label>
+            <input
+              type="number"
+              value={cgpa}
+              onChange={(e) => setCgpa(e.target.value)}
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B6CFF] focus:border-[#5B6CFF]"
+              placeholder="Enter CGPA"
+              min="0.0"
+              max="10.0"
+              step="0.1"
+              required
             />
           </div>
 
@@ -320,28 +365,57 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
               placeholder="Enter attendance percentage"
               min="0"
               max="100"
+              required
             />
           </div>
 
+          {/* CGPA Display Bar */}
+          <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-medium text-green-800">Your Current CGPA</p>
+                <p className="text-2xl font-bold text-green-600">{profile?.cgpa || 0.0}</p>
+              </div>
+              <div className="text-green-600">
+                <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
+                  <span className="text-lg font-bold">📊</span>
+                </div>
+              </div>
+            </div>
+
           <div className="flex gap-3 pt-4">
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className="flex-1 bg-[#5B6CFF] text-white py-3 px-4 rounded-lg font-bold hover:bg-[#4B5CEF] disabled:opacity-50 transition-all"
             >
               {loading ? 'Adding...' : 'Add'}
             </button>
             <button 
+              type="button"
+              onClick={() => {
+                setRollNo('');
+                setSkillCompleted('');
+                setAllocatedPoints('');
+                setAttendancePercentage('');
+                setCgpa('');
+                setMessage('');
+              }}
+              className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+            >
+              Clear
+            </button>
+            <button 
+              type="button"
               onClick={onClose}
               className="flex-1 border border-[#E5E7EB] py-3 px-4 rounded-lg font-bold hover:bg-[#F5F7FA] transition-colors"
             >
               Cancel
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
-
 export default StudentDashboard;

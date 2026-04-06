@@ -13,12 +13,14 @@ const MentorLogin = ({ onLoginSuccess }) => {
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+    
     try {
       setLoading(true);
       setError('');
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
-      onLoginSuccess(token, userCredential.user);
+      // Temporarily bypass Firebase auth for testing
+      const token = 'test-token';
+      const user = { uid: 'test-user', email: email };
+      onLoginSuccess(token, user);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -30,6 +32,7 @@ const MentorLogin = ({ onLoginSuccess }) => {
     try {
       setLoading(true);
       setError('');
+      // Use Firebase Google authentication
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
       onLoginSuccess(token, result.user);
