@@ -18,7 +18,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/mentor/students', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/mentor/students', {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       const data = await response.json();
@@ -40,7 +40,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
   const deleteStudent = async (id) => {
     if (!confirm('Delete this student?')) return;
     try {
-      await fetch(`http://localhost:5000/api/mentor/students/${id}`, {
+      await fetch(`https://digital-task-analyzer-performance.onrender.com/api/mentor/students/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -253,7 +253,7 @@ const AddStudentModal = ({ authToken, onClose, onSuccess }) => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/mentor/students', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/mentor/students', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

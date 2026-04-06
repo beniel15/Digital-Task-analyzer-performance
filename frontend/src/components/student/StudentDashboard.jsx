@@ -19,7 +19,7 @@ const StudentDashboard = ({ authToken, onLogout }) => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/student/profile', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/student/profile', {
         headers: { 
           'Content-Type': 'application/json'
           // Temporarily removed Authorization header for testing
@@ -35,7 +35,7 @@ const StudentDashboard = ({ authToken, onLogout }) => {
 
   const fetchMentorData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/mentor/students', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/mentor/students', {
         headers: { 
           'Content-Type': 'application/json'
           // Temporarily removed Authorization header for testing
@@ -219,7 +219,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
     setMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/student/update-details', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/student/update-details', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

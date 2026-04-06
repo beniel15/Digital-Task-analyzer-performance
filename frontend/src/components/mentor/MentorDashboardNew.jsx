@@ -109,7 +109,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
   const deleteStudent = async (id) => {
     if (!confirm('Delete this student?')) return;
     try {
-      await fetch(`http://localhost:5000/api/mentor/students/${id}`, {
+      await fetch(`https://digital-task-analyzer-performance.onrender.com/api/mentor/students/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -126,7 +126,7 @@ const MentorDashboard = ({ authToken, onLogout }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/mentor/students', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/mentor/students', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -778,7 +778,7 @@ const RankingsView = ({ students, onDelete, searchTerm, setSearchTerm, newStuden
 const ReportsView = ({ students }) => {
   const generatePDF = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/mentor/generate-pdf', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/mentor/generate-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

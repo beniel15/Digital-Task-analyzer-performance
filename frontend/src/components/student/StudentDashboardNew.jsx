@@ -10,7 +10,7 @@ const StudentDashboard = ({ authToken, onLogout }) => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/student/profile', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/student/profile', {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       const data = await response.json();
@@ -215,7 +215,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/student/update-details', {
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/student/update-details', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
