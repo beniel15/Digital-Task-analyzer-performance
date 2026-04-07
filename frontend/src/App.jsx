@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { Target, Trophy, Star } from 'lucide-react';
+import { Target, Trophy, Star, Shield } from 'lucide-react';
 
 // Components
 import MentorLogin from './components/mentor/MentorLogin';
 import MentorDashboard from './components/mentor/MentorDashboardNew';
 import StudentLogin from './components/student/StudentLogin';
 import StudentDashboard from './components/student/StudentDashboardFixed';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Firebase Config
 const firebaseConfig = {
@@ -23,6 +24,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// ⚠️ Set your admin password here
+const ADMIN_PASSWORD = 'admin@1234';
+
 function App() {
   const [authToken, setAuthToken] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -35,7 +39,6 @@ function App() {
         sessionStorage.removeItem('authToken');
         sessionStorage.removeItem('userRole');
         sessionStorage.removeItem('currentPage');
-
         setAuthToken(null);
         setUserRole(null);
         setCurrentPage('role-selection');
@@ -44,10 +47,8 @@ function App() {
           const freshToken = await user.getIdToken(true);
           const savedRole = sessionStorage.getItem('userRole');
           const savedPage = sessionStorage.getItem('currentPage');
-
           setAuthToken(freshToken);
           sessionStorage.setItem('authToken', freshToken);
-
           if (savedRole && savedPage) {
             setUserRole(savedRole);
             setCurrentPage(savedPage);
@@ -56,14 +57,11 @@ function App() {
           console.error('Token refresh failed:', error);
         }
       }
-
-      setAuthLoading(false); // Done — safe to render now
+      setAuthLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // Block rendering until Firebase resolves auth state
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -79,7 +77,6 @@ function App() {
     setAuthToken(token);
     setUserRole('mentor');
     setCurrentPage('mentor-dashboard');
-
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('userRole', 'mentor');
     sessionStorage.setItem('currentPage', 'mentor-dashboard');
@@ -89,10 +86,19 @@ function App() {
     setAuthToken(token);
     setUserRole('student');
     setCurrentPage('student-dashboard');
-
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('userRole', 'student');
     sessionStorage.setItem('currentPage', 'student-dashboard');
+  };
+
+  const handleAdminLogin = () => {
+    const password = window.prompt('Enter Admin Password:');
+    if (password === ADMIN_PASSWORD) {
+      setUserRole('admin');
+      setCurrentPage('admin-dashboard');
+    } else if (password !== null) {
+      alert('Incorrect password!');
+    }
   };
 
   const handleLogout = () => {
@@ -100,7 +106,6 @@ function App() {
     setAuthToken(null);
     setUserRole(null);
     setCurrentPage('role-selection');
-
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('currentPage');
@@ -123,7 +128,7 @@ function App() {
             <p className="text-gray-600">Select your role to continue</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
             <button
               onClick={() => { setUserRole('mentor'); setCurrentPage('mentor-login'); }}
               className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white p-8 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
@@ -142,6 +147,18 @@ function App() {
               <p className="text-blue-100">Track your progress and achievements</p>
             </button>
           </div>
+
+          {/* Admin Button */}
+          <button
+            onClick={handleAdminLogin}
+            className="w-full bg-gradient-to-br from-gray-700 to-gray-900 text-white p-5 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-3"
+          >
+            <Shield className="w-8 h-8" />
+            <div className="text-left">
+              <h2 className="text-xl font-bold">Sign in as Admin</h2>
+              <p className="text-gray-300 text-sm">Manage mentors and view system stats</p>
+            </div>
+          </button>
         </div>
       </div>
     );
@@ -175,6 +192,10 @@ function App() {
 
   if (currentPage === 'student-dashboard') {
     return <StudentDashboard authToken={authToken} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'admin-dashboard') {
+    return <AdminDashboard onLogout={handleLogout} />;
   }
 
   return null;

@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
 // Firebase Admin SDK
 // Prefer env vars if they are set; otherwise fall back to the local service account JSON file.
 let firebaseCredential;
