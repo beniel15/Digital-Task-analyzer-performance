@@ -39,6 +39,7 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port: parseInt(process.env.DB_PORT) || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -86,6 +87,14 @@ app.post('/api/auth/register-mentor', async (req, res) => {
 // Start server
 app.get('/', (req, res) => {
   res.send('🚀 Backend is running successfully!');
+});
+app.get('/test-db', async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT 1');
+    res.json({ success: true, message: 'DB connected!' });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
 });
 
 app.listen(PORT, () => {
