@@ -80,11 +80,10 @@ const MentorDashboard = ({ authToken, onLogout }) => {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/mentor/students', {
-        headers: { 'Authorization': `Bearer ${authToken}` }
-      });
-      const data = await response.json();
-
+      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/mentor/students', {
+  headers: { 'Authorization': `Bearer ${authToken}` }
+});
+const data = await response.json();
       if (!response.ok) {
         console.error('Failed to fetch students:', data);
         setStudents([]);
