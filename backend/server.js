@@ -32,17 +32,8 @@ admin.initializeApp({
   credential: firebaseCredential,
 });
 
-// MySQL Connection Pool
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: parseInt(process.env.DB_PORT) || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+// Database Connection Pool (MySQL with automatic Keep-Alive & SQLite fallback)
+const pool = require('./db');
 // Verify Firebase Token Middleware
 const verifyToken = async (req, res, next) => {
   const token = req.headers.authorization?.split('Bearer ')[1];
