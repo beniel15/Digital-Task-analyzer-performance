@@ -1,122 +1,324 @@
 const mysql = require('mysql2/promise');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
-class SQLitePoolWrapper {
-  constructor(dbPath) {
-    this.dbPath = dbPath;
-    this.db = new sqlite3.Database(dbPath);
-    this.initDatabase();
+const DATA_FILE = path.join(__dirname, 'data_store.json');
+
+const INITIAL_STUDENTS = [
+  {
+    id: 1,
+    firebase_uid: 'uid_sample_1',
+    name: 'Alex Johnson',
+    roll_number: 'CS2024001',
+    email: 'alex.j@university.edu',
+    personalized_skill: 'Full Stack Development',
+    completed_status: 'In Progress',
+    certificate_completion: 1,
+    reward_points: 850,
+    attendance_percentage: 92.5,
+    cgpa: 3.8,
+    performance_score: 88.0,
+    rank_position: 1,
+    completed_levels: 'Level 1, Level 2',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    firebase_uid: 'uid_sample_2',
+    name: 'Sarah Smith',
+    roll_number: 'CS2024002',
+    email: 'sarah.s@university.edu',
+    personalized_skill: 'Data Science & AI',
+    completed_status: 'In Progress',
+    certificate_completion: 1,
+    reward_points: 720,
+    attendance_percentage: 88.0,
+    cgpa: 3.6,
+    performance_score: 78.4,
+    rank_position: 2,
+    completed_levels: 'Level 1',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    firebase_uid: 'uid_sample_3',
+    name: 'Michael Brown',
+    roll_number: 'CS2024003',
+    email: 'michael.b@university.edu',
+    personalized_skill: 'Cloud Computing',
+    completed_status: 'Completed',
+    certificate_completion: 1,
+    reward_points: 950,
+    attendance_percentage: 95.0,
+    cgpa: 3.9,
+    performance_score: 95.0,
+    rank_position: 3,
+    completed_levels: 'Level 1, Level 2, Level 3',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 4,
+    firebase_uid: 'uid_sample_4',
+    name: 'Emily Davis',
+    roll_number: 'CS2024004',
+    email: 'emily.d@university.edu',
+    personalized_skill: 'Cybersecurity',
+    completed_status: 'Not Started',
+    certificate_completion: 0,
+    reward_points: 450,
+    attendance_percentage: 78.0,
+    cgpa: 3.2,
+    performance_score: 58.2,
+    rank_position: 4,
+    completed_levels: 'Level 1',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
+class PureJSDatabase {
+  constructor() {
+    this.data = {
+      students: [],
+      mentors: [],
+      activity_log: []
+    };
+    this.nextId = { students: 1, mentors: 1, activity_log: 1 };
+    this.loadData();
   }
 
-  initDatabase() {
-    this.db.serialize(() => {
-      this.db.run(`
-        CREATE TABLE IF NOT EXISTS students (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          firebase_uid TEXT UNIQUE NOT NULL,
-          name TEXT NOT NULL,
-          roll_number TEXT UNIQUE NOT NULL,
-          email TEXT UNIQUE NOT NULL,
-          personalized_skill TEXT,
-          completed_status TEXT DEFAULT 'Not Started',
-          certificate_completion INTEGER DEFAULT 0,
-          reward_points INTEGER DEFAULT 0,
-          attendance_percentage REAL DEFAULT 0.0,
-          cgpa REAL DEFAULT 0.0,
-          performance_score REAL DEFAULT 0.0,
-          rank_position INTEGER,
-          completed_levels TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      this.db.run(`
-        CREATE TABLE IF NOT EXISTS mentors (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          firebase_uid TEXT UNIQUE NOT NULL,
-          name TEXT NOT NULL,
-          email TEXT UNIQUE NOT NULL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      this.db.run(`
-        CREATE TABLE IF NOT EXISTS activity_log (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          student_id INTEGER NOT NULL,
-          activity_type TEXT NOT NULL,
-          activity_description TEXT,
-          points_earned INTEGER DEFAULT 0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
-        )
-      `);
-
-      this.db.get("SELECT COUNT(*) as count FROM students", (err, row) => {
-        if (!err && row && row.count === 0) {
-          console.log('🌱 Seeding initial sample students into database...');
-          const seedStudents = [
-            ['uid_sample_1', 'Alex Johnson', 'CS2024001', 'alex.j@university.edu', 'Full Stack Development', 'In Progress', 1, 850, 92.5, 3.8, 88.0, 1, 'Level 1, Level 2'],
-            ['uid_sample_2', 'Sarah Smith', 'CS2024002', 'sarah.s@university.edu', 'Data Science & AI', 'In Progress', 1, 720, 88.0, 3.6, 78.4, 2, 'Level 1'],
-            ['uid_sample_3', 'Michael Brown', 'CS2024003', 'michael.b@university.edu', 'Cloud Computing', 'Completed', 1, 950, 95.0, 3.9, 95.0, 3, 'Level 1, Level 2, Level 3'],
-            ['uid_sample_4', 'Emily Davis', 'CS2024004', 'emily.d@university.edu', 'Cybersecurity', 'Not Started', 0, 450, 78.0, 3.2, 58.2, 4, 'Level 1']
-          ];
-
-          const stmt = this.db.prepare(`
-            INSERT INTO students (
-              firebase_uid, name, roll_number, email, personalized_skill, 
-              completed_status, certificate_completion, reward_points, 
-              attendance_percentage, cgpa, performance_score, rank_position, completed_levels
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-
-          seedStudents.forEach(s => stmt.run(s));
-          stmt.finalize();
+  loadData() {
+    try {
+      if (fs.existsSync(DATA_FILE)) {
+        const raw = fs.readFileSync(DATA_FILE, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (parsed.students && parsed.students.length > 0) {
+          this.data = parsed;
+          this.updateNextIds();
+          return;
         }
-      });
-    });
+      }
+    } catch (e) {
+      console.error('Error loading JSON store:', e.message);
+    }
+    
+    this.data.students = [...INITIAL_STUDENTS];
+    this.updateNextIds();
+    this.saveData();
+  }
+
+  updateNextIds() {
+    for (const key of ['students', 'mentors', 'activity_log']) {
+      const items = this.data[key] || [];
+      const maxId = items.reduce((max, item) => Math.max(max, item.id || 0), 0);
+      this.nextId[key] = maxId + 1;
+    }
+  }
+
+  saveData() {
+    try {
+      fs.writeFileSync(DATA_FILE, JSON.stringify(this.data, null, 2));
+    } catch (e) {
+      // Ephemeral disk safety
+    }
   }
 
   execute(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      let normalizedSql = sql.trim();
-      
-      const isSelect = /^select/i.test(normalizedSql);
-      const isInsert = /^insert/i.test(normalizedSql);
-      const isUpdate = /^update/i.test(normalizedSql);
-      const isDelete = /^delete/i.test(normalizedSql);
-
-      if (isSelect) {
-        this.db.all(normalizedSql, params, (err, rows) => {
-          if (err) return reject(err);
-          resolve([rows, []]);
-        });
-      } else if (isInsert) {
-        this.db.run(normalizedSql, params, function (err) {
-          if (err) return reject(err);
-          resolve([{ insertId: this.lastID, affectedRows: this.changes }, []]);
-        });
-      } else if (isUpdate || isDelete) {
-        this.db.run(normalizedSql, params, function (err) {
-          if (err) return reject(err);
-          resolve([{ affectedRows: this.changes }, []]);
-        });
-      } else {
-        this.db.run(normalizedSql, params, (err) => {
-          if (err) return reject(err);
-          resolve([{ affectedRows: 0 }, []]);
-        });
-      }
-    });
-  }
-
-  async end() {
     return new Promise((resolve) => {
-      this.db.close(() => resolve());
+      const query = sql.trim();
+      const lowerQuery = query.toLowerCase();
+
+      // 1. SELECT 1 (test-db)
+      if (lowerQuery === 'select 1') {
+        return resolve([[{ 1: 1 }], []]);
+      }
+
+      // 2. CREATE TABLE
+      if (lowerQuery.startsWith('create table')) {
+        return resolve([{ affectedRows: 0 }, []]);
+      }
+
+      // 3. SELECT AVG(reward_points) as avg_points FROM students
+      if (lowerQuery.includes('avg(reward_points)')) {
+        const students = this.data.students || [];
+        const sum = students.reduce((acc, s) => acc + (Number(s.reward_points) || 0), 0);
+        const avg = students.length > 0 ? sum / students.length : 0;
+        return resolve([[{ avg_points: avg }], []]);
+      }
+
+      // 4. SELECT queries
+      if (lowerQuery.startsWith('select')) {
+        let tableName = 'students';
+        if (lowerQuery.includes('from mentors')) tableName = 'mentors';
+        else if (lowerQuery.includes('from activity_log')) tableName = 'activity_log';
+
+        let rows = [...(this.data[tableName] || [])];
+
+        if (lowerQuery.includes('where firebase_uid = ?')) {
+          const uid = params[0];
+          rows = rows.filter(r => r.firebase_uid === uid);
+        } else if (lowerQuery.includes('where roll_number = ?')) {
+          const roll = params[0];
+          rows = rows.filter(r => r.roll_number === roll);
+        } else if (lowerQuery.includes('replace(roll_number')) {
+          const target = (params[0] || '').toString().toLowerCase().replace(/\s+/g, '');
+          rows = rows.filter(r => (r.roll_number || '').toString().toLowerCase().replace(/\s+/g, '') === target);
+        } else if (lowerQuery.includes('where email = ?')) {
+          const email = params[0];
+          rows = rows.filter(r => r.email === email);
+        } else if (lowerQuery.includes('where id = ?')) {
+          const id = Number(params[0]);
+          rows = rows.filter(r => r.id === id);
+        } else if (lowerQuery.includes('where student_id = ?')) {
+          const sid = Number(params[0]);
+          rows = rows.filter(r => r.student_id === sid);
+        }
+
+        if (lowerQuery.includes('order by reward_points desc')) {
+          rows.sort((a, b) => (b.reward_points || 0) - (a.reward_points || 0));
+        } else if (lowerQuery.includes('order by id desc')) {
+          rows.sort((a, b) => (b.id || 0) - (a.id || 0));
+        }
+
+        if (lowerQuery.includes('limit 1')) {
+          rows = rows.slice(0, 1);
+        } else if (lowerQuery.includes('limit 5')) {
+          rows = rows.slice(0, 5);
+        } else if (lowerQuery.includes('limit 10')) {
+          rows = rows.slice(0, 10);
+        } else if (lowerQuery.includes('limit 20')) {
+          rows = rows.slice(0, 20);
+        }
+
+        if (tableName === 'students' && !lowerQuery.includes('where')) {
+          rows = rows.map((s, idx) => ({
+            ...s,
+            rank_position: idx + 1
+          }));
+        }
+
+        return resolve([rows, []]);
+      }
+
+      // 5. INSERT queries
+      if (lowerQuery.startsWith('insert into')) {
+        let tableName = 'students';
+        if (lowerQuery.includes('into mentors')) tableName = 'mentors';
+        else if (lowerQuery.includes('into activity_log')) tableName = 'activity_log';
+
+        const newId = this.nextId[tableName]++;
+        let newItem = { id: newId, created_at: new Date().toISOString() };
+
+        if (tableName === 'students') {
+          if (params.length === 3) {
+            newItem = {
+              id: newId,
+              firebase_uid: params[0],
+              name: params[1],
+              email: params[2],
+              roll_number: 'ROLL_' + newId,
+              reward_points: 0,
+              attendance_percentage: 0,
+              cgpa: 0,
+              performance_score: 0,
+              created_at: new Date().toISOString()
+            };
+          } else {
+            newItem = {
+              id: newId,
+              firebase_uid: params[0],
+              name: params[1],
+              roll_number: params[2],
+              email: params[3],
+              personalized_skill: params[4] || 'General Programming',
+              completed_status: params[5] || 'Not Started',
+              certificate_completion: params[6] ? 1 : 0,
+              reward_points: Number(params[7]) || 0,
+              attendance_percentage: Number(params[8]) || 0,
+              cgpa: Number(params[9]) || 0.0,
+              performance_score: Number(params[10]) || 0.0,
+              rank_position: params[11] || null,
+              created_at: new Date().toISOString()
+            };
+          }
+        } else if (tableName === 'mentors') {
+          newItem = {
+            id: newId,
+            firebase_uid: params[0],
+            name: params[1],
+            email: params[2],
+            created_at: new Date().toISOString()
+          };
+        } else if (tableName === 'activity_log') {
+          newItem = {
+            id: newId,
+            student_id: Number(params[0]),
+            activity_type: params[1],
+            activity_description: params[2],
+            points_earned: Number(params[3]) || 0,
+            created_at: new Date().toISOString()
+          };
+        }
+
+        this.data[tableName].push(newItem);
+        this.saveData();
+
+        return resolve([{ insertId: newId, affectedRows: 1 }, []]);
+      }
+
+      // 6. UPDATE queries
+      if (lowerQuery.startsWith('update students')) {
+        const id = Number(params[params.length - 1]);
+        const student = this.data.students.find(s => s.id === id);
+
+        if (student) {
+          if (lowerQuery.includes('performance_score = ? where id = ?')) {
+            student.performance_score = Number(params[0]);
+          } else if (lowerQuery.includes('reward_points = reward_points + 50')) {
+            student.reward_points = (student.reward_points || 0) + 50;
+            student.certificate_completion = 1;
+          } else {
+            let paramIdx = 0;
+            if (lowerQuery.includes('completed_levels = ?')) {
+              student.completed_levels = params[paramIdx++];
+            }
+            if (lowerQuery.includes('reward_points = ?')) {
+              student.reward_points = Number(params[paramIdx++]);
+            }
+            if (lowerQuery.includes('attendance_percentage = ?')) {
+              student.attendance_percentage = Number(params[paramIdx++]);
+            }
+            if (lowerQuery.includes('cgpa = ?')) {
+              student.cgpa = Number(params[paramIdx++]);
+            }
+            if (lowerQuery.includes('performance_score = ?')) {
+              student.performance_score = Number(params[paramIdx++]);
+            }
+          }
+
+          student.updated_at = new Date().toISOString();
+          this.saveData();
+          return resolve([{ affectedRows: 1 }, []]);
+        }
+
+        return resolve([{ affectedRows: 0 }, []]);
+      }
+
+      // 7. DELETE queries
+      if (lowerQuery.startsWith('delete from students')) {
+        const id = Number(params[0]);
+        const initCount = this.data.students.length;
+        this.data.students = this.data.students.filter(s => s.id !== id);
+        this.saveData();
+        const affected = initCount - this.data.students.length;
+        return resolve([{ affectedRows: affected }, []]);
+      }
+
+      return resolve([{ affectedRows: 0 }, []]);
     });
   }
 }
@@ -148,12 +350,6 @@ function createMySQLPool() {
     keepAliveInitialDelay: 0,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
   });
-}
-
-function getSQLitePool() {
-  const sqliteDbPath = path.join(__dirname, 'database.sqlite');
-  console.log(`📁 Using SQLite database at: ${sqliteDbPath}`);
-  return new SQLitePoolWrapper(sqliteDbPath);
 }
 
 const dbWrapper = {
@@ -189,7 +385,7 @@ const dbWrapper = {
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
               updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
-          `).catch(err => console.log('MySQL students table setup:', err.message));
+          `).catch(err => console.log('MySQL students setup note:', err.message));
 
           await activePool.execute(`
             CREATE TABLE IF NOT EXISTS mentors (
@@ -199,7 +395,7 @@ const dbWrapper = {
               email VARCHAR(255) UNIQUE NOT NULL,
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-          `).catch(err => console.log('MySQL mentors table setup:', err.message));
+          `).catch(err => console.log('MySQL mentors setup note:', err.message));
 
           await activePool.execute(`
             CREATE TABLE IF NOT EXISTS activity_log (
@@ -211,16 +407,17 @@ const dbWrapper = {
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
               FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
             )
-          `).catch(err => console.log('MySQL activity_log table setup:', err.message));
+          `).catch(err => console.log('MySQL activity_log setup note:', err.message));
 
           return;
         } catch (err) {
           console.error('⚠️ Remote MySQL connection failed:', err.message);
-          console.log('💡 Falling back to embedded SQLite database.');
+          console.log('💡 Falling back to pure JavaScript database engine.');
         }
       }
 
-      activePool = getSQLitePool();
+      console.log('📁 Using Pure JS Database Engine.');
+      activePool = new PureJSDatabase();
       isUsingMySQL = false;
     })();
 
@@ -236,8 +433,8 @@ const dbWrapper = {
       return await activePool.execute(sql, params);
     } catch (error) {
       if (isUsingMySQL && (error.code === 'PROTOCOL_CONNECTION_LOST' || error.code === 'ECONNRESET' || error.message?.includes('closed'))) {
-        console.error('⚠️ MySQL connection lost during query execution. Switching to SQLite database.');
-        activePool = getSQLitePool();
+        console.error('⚠️ MySQL connection lost during query execution. Switching to Pure JS engine.');
+        activePool = new PureJSDatabase();
         isUsingMySQL = false;
         return await activePool.execute(sql, params);
       }
