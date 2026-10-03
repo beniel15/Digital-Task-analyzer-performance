@@ -266,72 +266,7 @@ const data = await response.json();
         {renderContent()}
       </div>
 
-      {/* Add Student Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Add New Student</h2>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                <input
-                  type="text"
-                  value={newStudent.name}
-                  onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter student name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Roll Number</label>
-                <input
-                  type="text"
-                  value={newStudent.roll_number}
-                  onChange={(e) => setNewStudent({ ...newStudent, roll_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter roll number"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Firebase UID</label>
-                <input
-                  type="text"
-                  value={newStudent.firebase_uid}
-                  onChange={(e) => setNewStudent({ ...newStudent, firebase_uid: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter Firebase UID"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setNewStudent({ name: '', roll_number: '', firebase_uid: '' })}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Clear
-              </button>
-              <button
-                onClick={addStudent}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Add Student
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -357,13 +292,6 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Student Details</h2>
-            <button
-              onClick={onAddStudent}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            >
-              <Plus size={20} />
-              <span>Add New Student</span>
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -418,7 +346,7 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
         // Multiple Students View - Show stats cards and table
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
               <div className="flex items-center justify-between">
                 <div>
@@ -453,16 +381,6 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                   <TrendingUp className="text-purple-600" size={24} />
                 </div>
               </div>
-            </div>
-
-            <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-              <button
-                onClick={onAddStudent}
-                className="w-full h-full flex flex-col items-center justify-center space-y-2 hover:bg-orange-100 transition-colors rounded-xl"
-              >
-                <Plus className="text-orange-600" size={24} />
-                <span className="text-orange-600 font-medium">Add Student</span>
-              </button>
             </div>
           </div>
 
@@ -646,46 +564,7 @@ const RankingsView = ({ students, onDelete, searchTerm, setSearchTerm, newStuden
 
   return (
     <div className="p-8">
-      {/* Add Student Form */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Student</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-            <input
-              type="text"
-              value={newStudent.name}
-              onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter student name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Roll Number</label>
-            <input
-              type="text"
-              value={newStudent.roll_number}
-              onChange={(e) => setNewStudent({ ...newStudent, roll_number: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter roll number"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end space-x-3 mt-4">
-          <button
-            onClick={() => setNewStudent({ name: '', roll_number: '', firebase_uid: '' })}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Clear
-          </button>
-          <button
-            onClick={addStudent}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Add Student
-          </button>
-        </div>
-      </div>
+
 
       {/* Search Bar */}
       <div className="mb-6">

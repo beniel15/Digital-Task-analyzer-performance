@@ -150,6 +150,7 @@ const StudentDashboard = ({ authToken, onLogout }) => {
 
 // ADD DETAILS MODAL
 const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
+  const [studentName, setStudentName] = useState('');
   const [rollNo, setRollNo] = useState('');
   const [completedLevels, setCompletedLevels] = useState('');
   const [skillCompleted, setSkillCompleted] = useState('');
@@ -161,6 +162,11 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!rollNo.trim()) {
+      setMessage('Please enter your roll number');
+      return;
+    }
+
     setLoading(true);
     setMessage('');
 
@@ -171,6 +177,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          name: studentName,
           roll_no: rollNo,
           completed_levels: completedLevels,
           skill_completed: skillCompleted,
@@ -183,22 +190,16 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
       const data = await response.json();
       
       if (response.ok) {
-        setMessage(data.message || 'Details added successfully!');
+        setMessage(data.message || 'Details saved successfully!');
         
-        // Check for level completion message
         if (data.levelCompleted) {
           setMessage(`🎉 Congratulations for completing ${data.skill} level ${data.completedLevel}! Now try to complete ${data.skill} level ${data.nextLevel}.`);
-        }
-        
-        // Check for average points bonus
-        if (data.averageBonus) {
-          setMessage(prev => prev + '\n\n🏆 Excellent! You scored ${data.bonusPoints} bonus points for scoring above average!');
         }
         
         setTimeout(() => {
           onClose();
           onSuccess();
-        }, 3000);
+        }, 1500);
       } else {
         setMessage(data.error || 'Failed to add details');
       }
@@ -214,7 +215,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-8 max-w-2xl w-full">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Add Your Details</h2>
+          <h2 className="text-xl font-bold text-gray-900">Add / Update Your Details</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -226,6 +227,17 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
         </div>
         
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Student Name</label>
+            <input
+              type="text"
+              value={studentName}
+              onChange={(e) => setStudentName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter student name"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Roll Number</label>
             <input
@@ -290,8 +302,8 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
         
         {/* Message Display */}
         {message && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${
-            message.includes('🎉') || message.includes('🏆') 
+          <div className={`mt-4 p-3 rounded-lg text-sm ${
+            message.includes('🎉') || message.includes('🏆') || message.includes('successfully') 
               ? 'bg-green-100 text-green-800 border border-green-200' 
               : 'bg-red-100 text-red-800 border border-red-200'
           }`}>
@@ -302,6 +314,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
         <div className="flex justify-end space-x-3 mt-6">
           <button
             onClick={() => {
+              setStudentName('');
               setRollNo('');
               setCompletedLevels('');
               setSkillCompleted('');
@@ -319,7 +332,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
             disabled={loading}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            {loading ? 'Adding...' : 'Add'}
+            {loading ? 'Submitting...' : 'Submit Details'}
           </button>
         </div>
       </div>
