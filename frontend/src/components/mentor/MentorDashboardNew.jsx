@@ -2,21 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Target, TrendingUp, Award, Plus, Trash2, Search, FileText, Download, Settings, Users, BarChart3, Medal, Star, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
 // Helper function to parse completed levels
-const parseCompletedLevels = (completedLevels) => {
-  if (!completedLevels || completedLevels === '0' || completedLevels === 0) return {};
+const parseCompletedLevels = (completedLevels, personalizedSkill) => {
+  const source = (completedLevels && completedLevels !== '0' && completedLevels !== 'Not Started')
+    ? completedLevels
+    : personalizedSkill;
+
+  if (!source || source === '0' || source === 0 || source === 'Not Started') return {};
 
   const skills = {};
-  const skillEntries = String(completedLevels).split(',').map(entry => entry.trim()).filter(e => e && e !== '0' && e !== 'Not Started');
+  const skillEntries = String(source).split(',').map(entry => entry.trim()).filter(e => e && e !== '0' && e !== 'Not Started');
 
   skillEntries.forEach(entry => {
-    // Match "Java Level 1" or "Java 1" format (skill name with space before number)
-    const spaceMatch = entry.match(/^(.+?)\s+[Ll]evel\s+(\d+)$/i);
+    // Match "C LEVEL 1", "Java Level 1", "Java 1" format (skill name followed by optional LEVEL and digits)
+    const levelMatch = entry.match(/^(.+?)\s+(?:LEVEL\s+)?(\d+)$/i);
     // Match "C-1", "Python-2" format (skill name with dash before number)  
-    const dashMatch = entry.match(/^([A-Za-z][A-Za-z\s]*)-(\d+)$/);
+    const dashMatch = entry.match(/^([A-Za-z0-9_#\+\s]+)-(\d+)$/i);
 
-    if (spaceMatch) {
-      const skillName = spaceMatch[1].trim();
-      const level = parseInt(spaceMatch[2]);
+    if (levelMatch) {
+      const skillName = levelMatch[1].trim();
+      const level = parseInt(levelMatch[2]);
       if (!skills[skillName]) skills[skillName] = [];
       if (!skills[skillName].includes(level)) skills[skillName].push(level);
     } else if (dashMatch) {
@@ -33,17 +37,15 @@ const parseCompletedLevels = (completedLevels) => {
 };
 
 // Helper function to count total completed levels
-const countCompletedLevels = (completedLevels) => {
-  if (!completedLevels || completedLevels === '0' || completedLevels === 0) return 0;
-
-  const skills = parseCompletedLevels(completedLevels);
+const countCompletedLevels = (completedLevels, personalizedSkill) => {
+  const skills = parseCompletedLevels(completedLevels, personalizedSkill);
   let totalCount = 0;
 
   Object.values(skills).forEach(levels => {
     if (levels.length > 0) {
       totalCount += levels.length;
     } else {
-      totalCount += 1; // Count standalone string as 1 skill/level completed
+      totalCount += 1;
     }
   });
 
@@ -403,7 +405,7 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {students.map((student, index) => {
-                    const skills = parseCompletedLevels(student.completed_levels);
+                    const skills = parseCompletedLevels(student.completed_levels, student.personalized_skill);
                     return (
                       <tr key={student.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3 whitespace-nowrap text-center">
@@ -472,7 +474,7 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium">{countCompletedLevels(student.completed_levels)}</span>
+                            <span className="font-medium">{countCompletedLevels(student.completed_levels, student.personalized_skill)}</span>
                             <button
                               onClick={() => {
                                 const allExpanded = Object.keys(expandedSkills).filter(key =>
@@ -480,7 +482,7 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                                 ).length === 0;
 
                                 // Toggle all skills for this student
-                                const skills = parseCompletedLevels(student.completed_levels);
+                                const skills = parseCompletedLevels(student.completed_levels, student.personalized_skill);
                                 Object.keys(skills).forEach(skillName => {
                                   const key = `${student.id}-${skillName}`;
                                   setExpandedSkills(prev => ({
@@ -507,7 +509,7 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                           ).length > 0 && (
                               <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
                                 <div className="font-medium text-gray-700 mb-2">Completed Levels Details:</div>
-                                {Object.entries(parseCompletedLevels(student.completed_levels)).map(([skillName, levels]) => (
+                                {Object.entries(parseCompletedLevels(student.completed_levels, student.personalized_skill)).map(([skillName, levels]) => (
                                   <div key={skillName} className="mb-1">
                                     <span className="font-semibold">{skillName}{levels.length > 0 ? ':' : ''}</span>
                                     <span className="ml-2 text-gray-600">

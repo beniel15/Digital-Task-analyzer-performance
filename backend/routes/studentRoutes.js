@@ -170,6 +170,8 @@ module.exports = (pool) => {
       }
 
       if (skill_completed && skill_completed.trim()) {
+        updateFields.push('personalized_skill = ?');
+        updateValues.push(skill_completed.trim());
         updateFields.push('completed_levels = ?');
         updateValues.push(newCompletedLevels);
       }

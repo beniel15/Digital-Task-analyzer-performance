@@ -276,27 +276,31 @@ class PureJSDatabase {
         const student = this.data.students.find(s => s.id === id);
 
         if (student) {
-          if (lowerQuery.includes('performance_score = ? where id = ?')) {
-            student.performance_score = Number(params[0]);
-          } else if (lowerQuery.includes('reward_points = reward_points + 50')) {
-            student.reward_points = (student.reward_points || 0) + 50;
-            student.certificate_completion = 1;
-          } else {
+          const setMatch = query.match(/SET\s+(.+?)\s+WHERE/i);
+          if (setMatch) {
+            const setAssignments = setMatch[1].split(',').map(s => s.trim());
             let paramIdx = 0;
-            if (lowerQuery.includes('completed_levels = ?')) {
-              student.completed_levels = params[paramIdx++];
-            }
-            if (lowerQuery.includes('reward_points = ?')) {
-              student.reward_points = Number(params[paramIdx++]);
-            }
-            if (lowerQuery.includes('attendance_percentage = ?')) {
-              student.attendance_percentage = Number(params[paramIdx++]);
-            }
-            if (lowerQuery.includes('cgpa = ?')) {
-              student.cgpa = Number(params[paramIdx++]);
-            }
-            if (lowerQuery.includes('performance_score = ?')) {
-              student.performance_score = Number(params[paramIdx++]);
+
+            for (const assign of setAssignments) {
+              const colMatch = assign.match(/^([a-z0-9_]+)\s*=/i);
+              if (colMatch) {
+                const colName = colMatch[1].toLowerCase();
+                if (assign.toLowerCase().includes('reward_points + 50')) {
+                  student.reward_points = (student.reward_points || 0) + 50;
+                  student.certificate_completion = 1;
+                } else if (assign.toLowerCase().includes('current_timestamp')) {
+                  student.updated_at = new Date().toISOString();
+                } else if (paramIdx < params.length - 1) {
+                  const val = params[paramIdx++];
+                  if (colName === 'reward_points' || colName === 'performance_score') {
+                    student[colName] = Number(val) || 0;
+                  } else if (colName === 'attendance_percentage' || colName === 'cgpa') {
+                    student[colName] = Number(val) || 0;
+                  } else {
+                    student[colName] = val;
+                  }
+                }
+              }
             }
           }
 

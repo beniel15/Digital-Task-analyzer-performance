@@ -71,6 +71,24 @@
       "completed_levels": "Level 1",
       "created_at": "2026-10-03T16:57:34.464Z",
       "updated_at": "2026-10-03T16:57:34.464Z"
+    },
+    {
+      "id": 5,
+      "firebase_uid": "uid_c_test",
+      "name": "Test Student C",
+      "roll_number": "C_ROLL_101",
+      "email": "c101@test.com",
+      "personalized_skill": "C LEVEL 1",
+      "completed_status": "Not Started",
+      "certificate_completion": 0,
+      "reward_points": 100,
+      "attendance_percentage": 90,
+      "cgpa": 3.8,
+      "performance_score": 42,
+      "rank_position": null,
+      "created_at": "2026-10-03T17:39:38.045Z",
+      "completed_levels": "C LEVEL 1",
+      "updated_at": "2026-10-03T17:39:38.048Z"
     }
   ],
   "mentors": [],
