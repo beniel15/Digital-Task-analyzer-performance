@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const StudentDashboard = ({ authToken, onLogout }) => {
+const StudentDashboard = ({ authToken, userEmail, onLogout }) => {
   const [profile, setProfile] = useState(null);
   const [showAddDetails, setShowAddDetails] = useState(false);
   const [mentorData, setMentorData] = useState(null);
@@ -44,16 +44,24 @@ const StudentDashboard = ({ authToken, onLogout }) => {
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-6">
       {/* Header */}
-      <div className="bg-white border-b border-[#E5E7EB] px-6 py-4 shadow-sm">
+      <div className="bg-white border-b border-[#E5E7EB] px-6 py-4 shadow-sm rounded-xl mb-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-8">
             <h1 className="text-2xl font-bold text-[#1F2937]">Student Dashboard</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#5B6CFF] to-[#7C4DFF] rounded-full"></div>
+            {userEmail && (
+              <span className="text-sm font-semibold text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-full">
+                {userEmail}
+              </span>
+            )}
+            <div className="w-10 h-10 bg-gradient-to-br from-[#5B6CFF] to-[#7C4DFF] rounded-full flex items-center justify-center text-white font-bold text-sm shadow">
+              {userEmail ? userEmail.charAt(0).toUpperCase() : 'S'}
+            </div>
             <button 
               onClick={onLogout}
-              className="text-[#6B7280] hover:text-[#1F2937]"
+              className="text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              title="Logout"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l2 2M9 12" />

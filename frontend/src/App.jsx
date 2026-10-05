@@ -73,21 +73,29 @@ function App() {
     );
   }
 
+  const [userEmail, setUserEmail] = useState(sessionStorage.getItem('userEmail') || '');
+
   const handleMentorLogin = (token, user) => {
+    const email = user?.email || 'mentor@bitsathy.ac.in';
     setAuthToken(token);
     setUserRole('mentor');
+    setUserEmail(email);
     setCurrentPage('mentor-dashboard');
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('userRole', 'mentor');
+    sessionStorage.setItem('userEmail', email);
     sessionStorage.setItem('currentPage', 'mentor-dashboard');
   };
 
   const handleStudentLogin = (token, user) => {
+    const email = user?.email || '';
     setAuthToken(token);
     setUserRole('student');
+    setUserEmail(email);
     setCurrentPage('student-dashboard');
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('userRole', 'student');
+    sessionStorage.setItem('userEmail', email);
     sessionStorage.setItem('currentPage', 'student-dashboard');
   };
 
@@ -105,9 +113,11 @@ function App() {
     auth.signOut();
     setAuthToken(null);
     setUserRole(null);
+    setUserEmail('');
     setCurrentPage('role-selection');
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userEmail');
     sessionStorage.removeItem('currentPage');
   };
 
@@ -176,7 +186,7 @@ function App() {
   }
 
   if (currentPage === 'mentor-dashboard') {
-    return <MentorDashboard authToken={authToken} onLogout={handleLogout} />;
+    return <MentorDashboard authToken={authToken} userEmail={userEmail} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'student-login') {
@@ -191,7 +201,7 @@ function App() {
   }
 
   if (currentPage === 'student-dashboard') {
-    return <StudentDashboard authToken={authToken} onLogout={handleLogout} />;
+    return <StudentDashboard authToken={authToken} userEmail={userEmail} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'admin-dashboard') {

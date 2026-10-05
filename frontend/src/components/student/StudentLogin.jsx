@@ -13,6 +13,10 @@ const StudentLogin = ({ onLoginSuccess }) => {
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+    if (!email.trim().toLowerCase().endsWith('@bitsathy.ac.in')) {
+      setError('Access denied! Only college email (@bitsathy.ac.in) is allowed to sign in.');
+      return;
+    }
     try {
       setLoading(true);
       setError('');
@@ -31,6 +35,12 @@ const StudentLogin = ({ onLoginSuccess }) => {
       setLoading(true);
       setError('');
       const result = await signInWithPopup(auth, googleProvider);
+      const userEmail = result.user?.email || '';
+      if (!userEmail.toLowerCase().endsWith('@bitsathy.ac.in')) {
+        await auth.signOut();
+        setError(`Access denied! Only college email (@bitsathy.ac.in) is allowed. (Signed in as: ${userEmail})`);
+        return;
+      }
       const token = await result.user.getIdToken();
       onLoginSuccess(token, result.user);
     } catch (error) {
@@ -47,23 +57,26 @@ const StudentLogin = ({ onLoginSuccess }) => {
           <Star className="w-16 h-16 mx-auto mb-4 text-blue-600" />
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Student Login</h1>
           <p className="text-gray-600">Track your progress & rewards</p>
+          <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+            College Portal (@bitsathy.ac.in)
+          </span>
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Email</label>
+            <label className="block text-gray-700 mb-2 font-medium">College Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-              placeholder="student@example.com"
+              placeholder="benielraja.cs23@bitsathy.ac.in"
               required
             />
           </div>

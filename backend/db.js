@@ -5,80 +5,7 @@ require('dotenv').config();
 
 const DATA_FILE = path.join(__dirname, 'data_store.json');
 
-const INITIAL_STUDENTS = [
-  {
-    id: 1,
-    firebase_uid: 'uid_sample_1',
-    name: 'Alex Johnson',
-    roll_number: 'CS2024001',
-    email: 'alex.j@university.edu',
-    personalized_skill: 'Full Stack Development',
-    completed_status: 'In Progress',
-    certificate_completion: 1,
-    reward_points: 850,
-    attendance_percentage: 92.5,
-    cgpa: 3.8,
-    performance_score: 88.0,
-    rank_position: 1,
-    completed_levels: 'Level 1, Level 2',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    firebase_uid: 'uid_sample_2',
-    name: 'Sarah Smith',
-    roll_number: 'CS2024002',
-    email: 'sarah.s@university.edu',
-    personalized_skill: 'Data Science & AI',
-    completed_status: 'In Progress',
-    certificate_completion: 1,
-    reward_points: 720,
-    attendance_percentage: 88.0,
-    cgpa: 3.6,
-    performance_score: 78.4,
-    rank_position: 2,
-    completed_levels: 'Level 1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 3,
-    firebase_uid: 'uid_sample_3',
-    name: 'Michael Brown',
-    roll_number: 'CS2024003',
-    email: 'michael.b@university.edu',
-    personalized_skill: 'Cloud Computing',
-    completed_status: 'Completed',
-    certificate_completion: 1,
-    reward_points: 950,
-    attendance_percentage: 95.0,
-    cgpa: 3.9,
-    performance_score: 95.0,
-    rank_position: 3,
-    completed_levels: 'Level 1, Level 2, Level 3',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 4,
-    firebase_uid: 'uid_sample_4',
-    name: 'Emily Davis',
-    roll_number: 'CS2024004',
-    email: 'emily.d@university.edu',
-    personalized_skill: 'Cybersecurity',
-    completed_status: 'Not Started',
-    certificate_completion: 0,
-    reward_points: 450,
-    attendance_percentage: 78.0,
-    cgpa: 3.2,
-    performance_score: 58.2,
-    rank_position: 4,
-    completed_levels: 'Level 1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+const INITIAL_STUDENTS = [];
 
 class PureJSDatabase {
   constructor() {
@@ -96,9 +23,14 @@ class PureJSDatabase {
       if (fs.existsSync(DATA_FILE)) {
         const raw = fs.readFileSync(DATA_FILE, 'utf8');
         const parsed = JSON.parse(raw);
-        if (parsed.students && parsed.students.length > 0) {
+        if (parsed.students) {
+          parsed.students = (parsed.students || []).filter(s =>
+            !['CS2024001', 'CS2024002', 'CS2024003', 'CS2024004', 'C_ROLL_101'].includes(s.roll_number) &&
+            !['Alex Johnson', 'Sarah Smith', 'Michael Brown', 'Emily Davis', 'Test Student C'].includes(s.name)
+          );
           this.data = parsed;
           this.updateNextIds();
+          this.saveData();
           return;
         }
       }
@@ -106,7 +38,7 @@ class PureJSDatabase {
       console.error('Error loading JSON store:', e.message);
     }
     
-    this.data.students = [...INITIAL_STUDENTS];
+    this.data.students = [];
     this.updateNextIds();
     this.saveData();
   }

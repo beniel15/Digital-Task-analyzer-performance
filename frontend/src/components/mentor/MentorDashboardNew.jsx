@@ -52,7 +52,7 @@ const countCompletedLevels = (completedLevels, personalizedSkill) => {
   return totalCount;
 };
 
-const MentorDashboard = ({ authToken, onLogout }) => {
+const MentorDashboard = ({ authToken, userEmail, onLogout }) => {
   const [students, setStudents] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStudent, setNewStudent] = useState({
@@ -206,6 +206,9 @@ const data = await response.json();
       <div className="w-64 bg-slate-800 text-white flex flex-col">
         <div className="p-6 border-b border-slate-700">
           <h1 className="text-xl font-bold">Mentor Portal</h1>
+          {userEmail && (
+            <p className="text-xs text-purple-300 mt-1 font-mono truncate">{userEmail}</p>
+          )}
         </div>
 
         <nav className="flex-1 p-4">
@@ -404,7 +407,20 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {students.map((student, index) => {
+                  {students.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                          <p className="text-lg font-semibold text-gray-700">No Student Records Available</p>
+                          <p className="text-sm text-gray-500 max-w-md mx-auto">
+                            Data will be displayed here only after students update and add their details in the Student Portal.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    students.map((student, index) => {
                     const skills = parseCompletedLevels(student.completed_levels, student.personalized_skill);
                     return (
                       <tr key={student.id} className="hover:bg-gray-50 transition-colors">
@@ -598,7 +614,14 @@ const RankingsView = ({ students, onDelete, searchTerm, setSearchTerm, newStuden
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {students.map((student, index) => (
+              {students.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                    No student records found.
+                  </td>
+                </tr>
+              ) : (
+                students.map((student, index) => (
                 <tr key={student.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-800' :

@@ -5,8 +5,26 @@ module.exports = (pool) => {
   // ==================== GET ALL STUDENTS ====================
   router.get('/students', async (req, res) => {
     try {
+      // Auto-purge dummy students from database if present
+      try {
+        await pool.execute(`
+          DELETE FROM students WHERE roll_number IN ('CS2024001', 'CS2024002', 'CS2024003', 'CS2024004', 'C_ROLL_101')
+          OR email IN ('alex.j@university.edu', 'sarah.s@university.edu', 'michael.b@university.edu', 'emily.d@university.edu', 'c101@test.com')
+          OR name IN ('Alex Johnson', 'Sarah Smith', 'Michael Brown', 'Emily Davis', 'Test Student C')
+        `);
+      } catch (e) {
+        // Ignore deletion errors if pool query handles it
+      }
+
       const [students] = await pool.execute('SELECT * FROM students ORDER BY reward_points DESC');
-      res.json(students);
+      
+      // Filter out any lingering dummy sample students
+      const cleanStudents = (students || []).filter(s =>
+        !['CS2024001', 'CS2024002', 'CS2024003', 'CS2024004', 'C_ROLL_101'].includes(s.roll_number) &&
+        !['Alex Johnson', 'Sarah Smith', 'Michael Brown', 'Emily Davis', 'Test Student C'].includes(s.name)
+      );
+
+      res.json(cleanStudents);
     } catch (error) {
       console.error('Error fetching students:', error);
       res.status(500).json({ error: 'Failed to fetch students' });

@@ -13,16 +13,37 @@ const MentorLogin = ({ onLoginSuccess }) => {
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if email is an authorized mentor email (Must start with 'mentor' or be mentor@bitsathy.ac.in)
+    const isMentorEmail = cleanEmail === 'mentor@bitsathy.ac.in' || cleanEmail.startsWith('mentor@') || cleanEmail.startsWith('mentor.');
+    if (!isMentorEmail) {
+      setError(`Access denied! Student email (${cleanEmail}) is not allowed to sign in as Mentor. Please use mentor@bitsathy.ac.in or your Mentor credentials.`);
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
-      // Temporarily bypass Firebase auth for testing
-      const token = 'test-token';
-      const user = { uid: 'test-user', email: email };
+      // Authenticate mentor credentials or Firebase
+      let token = 'test-token';
+      let user = { uid: 'mentor-uid', email: cleanEmail };
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        token = await userCredential.user.getIdToken();
+        user = userCredential.user;
+      } catch (fbErr) {
+        // Fallback for default mentor credentials
+        if (cleanEmail === 'mentor@bitsathy.ac.in' && password === 'mentor123') {
+          token = 'mentor-auth-token';
+          user = { uid: 'mentor-101', email: 'mentor@bitsathy.ac.in', displayName: 'Faculty Mentor' };
+        } else {
+          throw fbErr;
+        }
+      }
       onLoginSuccess(token, user);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message || 'Invalid mentor credentials');
     } finally {
       setLoading(false);
     }
@@ -32,12 +53,22 @@ const MentorLogin = ({ onLoginSuccess }) => {
     try {
       setLoading(true);
       setError('');
-      // Use Firebase Google authentication
       const result = await signInWithPopup(auth, googleProvider);
+      const userEmail = result.user?.email || '';
+      const cleanGoogleEmail = userEmail.trim().toLowerCase();
+
+      // Verify Google login is an authorized mentor email
+      const isMentorEmail = cleanGoogleEmail === 'mentor@bitsathy.ac.in' || cleanGoogleEmail.startsWith('mentor@') || cleanGoogleEmail.startsWith('mentor.');
+      if (!isMentorEmail) {
+        await auth.signOut();
+        setError(`Access denied! Student email (${userEmail}) cannot sign in as Mentor. Please use authorized mentor email (mentor@bitsathy.ac.in).`);
+        return;
+      }
+
       const token = await result.user.getIdToken();
       onLoginSuccess(token, result.user);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -46,27 +77,33 @@ const MentorLogin = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <Trophy className="w-16 h-16 mx-auto mb-4 text-purple-600" />
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Mentor Login</h1>
           <p className="text-gray-600">Monitor student performance</p>
         </div>
 
+        <div className="bg-purple-50 border border-purple-200 text-purple-800 p-3 rounded-lg mb-6 text-sm">
+          <p className="font-semibold mb-1">🔑 Demo Mentor Access:</p>
+          <p><span className="font-medium">Email:</span> mentor@bitsathy.ac.in</p>
+          <p><span className="font-medium">Password:</span> mentor123</p>
+        </div>
+
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Email</label>
+            <label className="block text-gray-700 mb-2 font-medium">Mentor Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
-              placeholder="mentor@example.com"
+              placeholder="mentor@bitsathy.ac.in"
               required
             />
           </div>
@@ -88,7 +125,7 @@ const MentorLogin = ({ onLoginSuccess }) => {
             disabled={loading}
             className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in...' : 'Login as Mentor'}
           </button>
         </form>
 
