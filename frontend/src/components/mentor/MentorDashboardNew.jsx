@@ -561,7 +561,7 @@ const DashboardView = ({ students, onAddStudent, expandedSkills, toggleSkillExpa
                         </td>
                       </tr>
                     );
-                  })}
+                  }))}
                 </tbody>
               </table>
             </div>
@@ -668,7 +668,7 @@ const RankingsView = ({ students, onDelete, searchTerm, setSearchTerm, newStuden
                     </button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
