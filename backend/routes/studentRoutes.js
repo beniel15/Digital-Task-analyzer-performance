@@ -18,25 +18,20 @@ module.exports = (pool) => {
   // ==================== GET STUDENT PROFILE ====================
   router.get('/profile', async (req, res) => {
     try {
-      const firebase_uid = req.user?.uid || 'test_uid';
+      const email = (req.query.email || req.user?.email || '').trim().toLowerCase();
 
-      const [students] = await pool.execute(
-        'SELECT * FROM students ORDER BY id DESC LIMIT 1'
-      );
-
-      if (students.length === 0) {
-        return res.json({
-          id: 1,
-          name: 'Test Student',
-          roll_number: 'TEST001',
-          cgpa: 0.0,
-          reward_points: 0,
-          completed_levels: '',
-          personalized_skill: 'Not assigned'
-        });
+      if (email) {
+        const [students] = await pool.execute(
+          'SELECT * FROM students WHERE LOWER(email) = ? LIMIT 1',
+          [email]
+        );
+        if (students.length > 0) {
+          return res.json(students[0]);
+        }
       }
 
-      res.json(students[0]);
+      // Fallback if no email provided or not found
+      return res.json(null);
 
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -47,40 +42,59 @@ module.exports = (pool) => {
   // ==================== UPDATE / AUTO-CREATE STUDENT DETAILS ====================
   router.post('/update-details', async (req, res) => {
     try {
-      const { name, student_name, roll_no, skill_completed, allocated_points, attendance_percentage, cgpa } = req.body;
+      const { name, student_name, roll_no, email, user_email, skill_completed, allocated_points, attendance_percentage, cgpa } = req.body;
 
       if (!roll_no || !roll_no.trim()) {
         return res.status(400).json({ error: 'Roll number is required' });
       }
 
       const cleanRollNo = roll_no.trim();
+      const studentEmail = (email || user_email || req.user?.email || '').trim().toLowerCase();
+
+      if (!studentEmail) {
+        return res.status(400).json({ error: 'Student email is required to save details' });
+      }
+
       const displayName = (name || student_name || '').trim() || `Student (${cleanRollNo})`;
 
       console.log('🔍 Update Details Request:', {
         name: displayName,
         roll_no: cleanRollNo,
+        email: studentEmail,
         skill_completed,
         allocated_points,
         attendance_percentage,
         cgpa
       });
 
-      // Find student by roll number
+      // Check if student already exists for THIS logged-in email
       let [students] = await pool.execute(
-        'SELECT id, reward_points, completed_levels, name FROM students WHERE roll_number = ?',
-        [cleanRollNo]
+        'SELECT id, reward_points, completed_levels, name, roll_number, email FROM students WHERE LOWER(email) = ?',
+        [studentEmail]
       );
 
+      // If not found by email, check if found by roll number
       if (!students || students.length === 0) {
-        const normalized = cleanRollNo.toLowerCase().replace(/\s+/g, '');
-        const fallbackQuery = `SELECT id, reward_points, completed_levels, roll_number, name FROM students WHERE LOWER(REPLACE(roll_number, ' ', '')) = ?`;
-        const [fallbackRows] = await pool.execute(fallbackQuery, [normalized]);
-        students = fallbackRows;
+        const [byRoll] = await pool.execute(
+          'SELECT id, reward_points, completed_levels, name, roll_number, email FROM students WHERE roll_number = ?',
+          [cleanRollNo]
+        );
+        students = byRoll;
       }
 
-      // If student does not exist, AUTO-CREATE student in database
+      // If student does not exist, AUTO-CREATE 1 student profile for THIS email account
       if (!students || students.length === 0) {
-        console.log('✨ Student not found. Auto-creating new student for roll number:', cleanRollNo);
+        // Double check roll number is not taken by someone else
+        const [existingRoll] = await pool.execute(
+          'SELECT id FROM students WHERE roll_number = ? AND LOWER(email) != ?',
+          [cleanRollNo, studentEmail]
+        );
+
+        if (existingRoll.length > 0) {
+          return res.status(400).json({ error: 'This roll number is already registered to another student account.' });
+        }
+
+        console.log('✨ Auto-creating new student profile for email:', studentEmail);
         const points = Number(allocated_points) || 0;
         const attendance = Number(attendance_percentage) || 0;
         const studentCgpa = Number(cgpa) || 0.0;
@@ -88,7 +102,6 @@ module.exports = (pool) => {
         const attendanceScore = (attendance / 100) * 40;
         const performance_score = Number((pointsScore + attendanceScore).toFixed(2));
         const newUid = 'uid_' + Date.now();
-        const studentEmail = `${cleanRollNo.toLowerCase().replace(/\s+/g, '')}@student.com`;
 
         const [insertResult] = await pool.execute(
           `INSERT INTO students (
@@ -124,7 +137,7 @@ module.exports = (pool) => {
         console.log('✅ Auto-created student ID:', insertResult.insertId);
 
         return res.status(200).json({
-          message: 'Student added to system and details saved successfully!',
+          message: 'Student details saved successfully!',
           completed_levels: skill_completed,
           cgpa: studentCgpa,
           studentId: insertResult.insertId

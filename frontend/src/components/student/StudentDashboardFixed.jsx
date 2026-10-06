@@ -15,7 +15,7 @@ const StudentDashboard = ({ authToken, userEmail, onLogout }) => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('https://digital-task-analyzer-performance.onrender.com/api/student/profile', {
+      const response = await fetch(`https://digital-task-analyzer-performance.onrender.com/api/student/profile?email=${encodeURIComponent(userEmail || '')}`, {
         headers: { 
           'Content-Type': 'application/json'
         }
@@ -80,7 +80,7 @@ const StudentDashboard = ({ authToken, userEmail, onLogout }) => {
             onClick={() => setShowAddDetails(true)}
             className="bg-[#5B6CFF] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#4B5CEF] transition-all transform hover:scale-105"
           >
-            Add Details
+            {profile?.name ? 'Update Your Details' : 'Add Your Details'}
           </button>
         </div>
 
@@ -145,6 +145,8 @@ const StudentDashboard = ({ authToken, userEmail, onLogout }) => {
       {showAddDetails && (
         <AddDetailsModal
           authToken={authToken}
+          userEmail={userEmail}
+          profile={profile}
           onClose={() => setShowAddDetails(false)}
           onSuccess={() => {
             fetchProfile();
@@ -157,14 +159,14 @@ const StudentDashboard = ({ authToken, userEmail, onLogout }) => {
 };
 
 // ADD DETAILS MODAL
-const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
-  const [studentName, setStudentName] = useState('');
-  const [rollNo, setRollNo] = useState('');
+const AddDetailsModal = ({ authToken, userEmail, profile, onClose, onSuccess }) => {
+  const [studentName, setStudentName] = useState(profile?.name || '');
+  const [rollNo, setRollNo] = useState(profile?.roll_number || '');
   const [completedLevels, setCompletedLevels] = useState('');
   const [skillCompleted, setSkillCompleted] = useState('');
   const [allocatedPoints, setAllocatedPoints] = useState('');
-  const [attendancePercentage, setAttendancePercentage] = useState('');
-  const [cgpa, setCgpa] = useState('');
+  const [attendancePercentage, setAttendancePercentage] = useState(profile?.attendance_percentage || '');
+  const [cgpa, setCgpa] = useState(profile?.cgpa || '');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -187,6 +189,7 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
         body: JSON.stringify({
           name: studentName,
           roll_no: rollNo,
+          email: userEmail,
           completed_levels: completedLevels,
           skill_completed: skillCompleted,
           allocated_points: parseInt(allocatedPoints) || 0,
