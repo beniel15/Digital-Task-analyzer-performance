@@ -67,31 +67,21 @@ module.exports = (pool) => {
         cgpa
       });
 
-      // Check if student already exists for THIS logged-in email
+      // Find student record strictly for THIS logged-in email
       let [students] = await pool.execute(
         'SELECT id, reward_points, completed_levels, name, roll_number, email FROM students WHERE LOWER(email) = ?',
         [studentEmail]
       );
 
-      // If not found by email, check if found by roll number
+      // If student does not exist for this email, check roll number duplicate
       if (!students || students.length === 0) {
-        const [byRoll] = await pool.execute(
-          'SELECT id, reward_points, completed_levels, name, roll_number, email FROM students WHERE roll_number = ?',
+        const [existingRoll] = await pool.execute(
+          'SELECT id, email FROM students WHERE roll_number = ?',
           [cleanRollNo]
         );
-        students = byRoll;
-      }
 
-      // If student does not exist, AUTO-CREATE 1 student profile for THIS email account
-      if (!students || students.length === 0) {
-        // Double check roll number is not taken by someone else
-        const [existingRoll] = await pool.execute(
-          'SELECT id FROM students WHERE roll_number = ? AND LOWER(email) != ?',
-          [cleanRollNo, studentEmail]
-        );
-
-        if (existingRoll.length > 0) {
-          return res.status(400).json({ error: 'This roll number is already registered to another student account.' });
+        if (existingRoll.length > 0 && existingRoll[0].email.toLowerCase() !== studentEmail) {
+          return res.status(400).json({ error: `This Roll Number (${cleanRollNo}) is already registered to another student account.` });
         }
 
         console.log('✨ Auto-creating new student profile for email:', studentEmail);

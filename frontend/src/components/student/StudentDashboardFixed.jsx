@@ -160,6 +160,8 @@ const StudentDashboard = ({ authToken, userEmail, onLogout }) => {
 
 // ADD DETAILS MODAL
 const AddDetailsModal = ({ authToken, userEmail, profile, onClose, onSuccess }) => {
+  const activeEmail = userEmail || sessionStorage.getItem('userEmail') || profile?.email || '';
+  const [emailVal, setEmailVal] = useState(activeEmail);
   const [studentName, setStudentName] = useState(profile?.name || '');
   const [rollNo, setRollNo] = useState(profile?.roll_number || '');
   const [completedLevels, setCompletedLevels] = useState('');
@@ -177,6 +179,18 @@ const AddDetailsModal = ({ authToken, userEmail, profile, onClose, onSuccess }) 
       return;
     }
 
+    const submittedEmail = (emailVal || activeEmail).trim().toLowerCase();
+    if (!submittedEmail) {
+      setMessage('Student email is required to save details');
+      return;
+    }
+
+    // Verify submitted email matches signed-in account email
+    if (activeEmail && submittedEmail !== activeEmail.toLowerCase()) {
+      setMessage(`Security verification failed: Submitted email (${submittedEmail}) does not match your signed-in account (${activeEmail}). You can only update your own profile.`);
+      return;
+    }
+
     setLoading(true);
     setMessage('');
 
@@ -189,7 +203,7 @@ const AddDetailsModal = ({ authToken, userEmail, profile, onClose, onSuccess }) 
         body: JSON.stringify({
           name: studentName,
           roll_no: rollNo,
-          email: userEmail,
+          email: submittedEmail,
           completed_levels: completedLevels,
           skill_completed: skillCompleted,
           allocated_points: parseInt(allocatedPoints) || 0,
@@ -238,6 +252,23 @@ const AddDetailsModal = ({ authToken, userEmail, profile, onClose, onSuccess }) 
         </div>
         
         <div className="space-y-4">
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">College Email</label>
+              <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">
+                Auto-suggested from Sign In
+              </span>
+            </div>
+            <input
+              type="email"
+              value={emailVal}
+              onChange={(e) => setEmailVal(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+              placeholder="benielraja.cs23@bitsathy.ac.in"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Student Name</label>
             <input
