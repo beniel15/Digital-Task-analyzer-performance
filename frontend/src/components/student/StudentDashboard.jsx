@@ -302,6 +302,23 @@ const AddDetailsModal = ({ authToken, onClose, onSuccess }) => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-[#1F2937]">College Email</label>
+              <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">
+                Auto-suggested from Sign In
+              </span>
+            </div>
+            <input
+              type="email"
+              value={userEmail || sessionStorage.getItem('userEmail') || profile?.email || ''}
+              readOnly
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg bg-gray-50 focus:outline-none font-mono text-sm text-gray-700"
+              placeholder="benielraja.cs23@bitsathy.ac.in"
+              required
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-[#1F2937] mb-2">Enter Roll No</label>
             <input
               type="text"
