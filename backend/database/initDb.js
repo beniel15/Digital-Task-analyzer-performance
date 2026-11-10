@@ -3,7 +3,23 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 
-const DB_PATH = path.join(__dirname, '..', 'task_performance.db');
+const isVercel = !!process.env.VERCEL;
+const DB_PATH = isVercel
+  ? path.join('/tmp', 'task_performance.db')
+  : (process.env.DB_PATH || path.join(__dirname, '..', 'task_performance.db'));
+
+function ensureDbFile() {
+  if (isVercel && !fs.existsSync(DB_PATH)) {
+    const seedDb = path.join(__dirname, '..', 'task_performance.db');
+    if (fs.existsSync(seedDb)) {
+      try {
+        fs.copyFileSync(seedDb, DB_PATH);
+      } catch (e) {
+        console.error('Failed to copy db to /tmp:', e);
+      }
+    }
+  }
+}
 
 function hashPassword(password) {
   const salt = 'mentor_mentee_salt_2026';
@@ -11,6 +27,7 @@ function hashPassword(password) {
 }
 
 function getDatabase() {
+  ensureDbFile();
   const db = new sqlite3.Database(DB_PATH);
   db.serialize(() => {
     db.run('PRAGMA foreign_keys = ON;');

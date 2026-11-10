@@ -14,10 +14,13 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// API Routes
+// API Routes (supports both /api/ prefix and direct routes for serverless deployments)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/student', studentRoutes);
 app.use('/api/mentor', mentorRoutes);
+app.use('/mentor', mentorRoutes);
 
 // Root & Health Check Endpoints
 app.get('/', (req, res) => {
