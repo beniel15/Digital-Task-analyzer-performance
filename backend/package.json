@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "init-db": "mysql -u root -p < ../database/schema.sql"
+    "seed": "node database/initDb.js",
+    "test": "node test-backend.js"
   },
   "keywords": [
     "task",

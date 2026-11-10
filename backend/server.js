@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise');
-const admin = require('firebase-admin');
-require('dotenv').config(); 
+require('dotenv').config();
+
+const db = require('./db');
+const authRoutes = require('./routes/authRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const mentorRoutes = require('./routes/mentorRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -10,90 +13,78 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-// Firebase Admin SDK
-// Prefer env vars if they are set; otherwise fall back to the local service account JSON file.
-let firebaseCredential;
 
-if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-  // Using individual env variables (what your current .env shows)
-  firebaseCredential = admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/student', studentRoutes);
+app.use('/api/mentor', mentorRoutes);
+
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: '🎓 Mentor–Mentee Management Dashboard API is running successfully!',
+    version: '2.0.0'
   });
-} else {
-  // Fallback: read from backend/serviceAccountKey.json.json
-  // This file already contains project_id, client_email, private_key, etc.
-  const serviceAccount = require('./serviceAccountKey.json')
-  firebaseCredential = admin.credential.cert(serviceAccount);
+});
+
+app.get('/api/health', async (req, res) => {
+  try {
+    const studentCount = await db.get('SELECT COUNT(*) as count FROM students');
+    const mentorCount = await db.get('SELECT COUNT(*) as count FROM mentors');
+    res.json({
+      success: true,
+      database: 'connected',
+      studentsRegistered: studentCount?.count || 0,
+      mentorsRegistered: mentorCount?.count || 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Centralized Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled Application Error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred.'
+  });
+});
+
+// Initialize DB and Start Server
+async function startServer() {
+  try {
+    await db.init();
+    console.log('✅ Relational Database initialized & verified successfully.');
+
+    const server = app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`🔗 API available at http://localhost:${PORT}`);
+    });
+
+    // Graceful Shutdown
+    const shutdown = async () => {
+      console.log('\n🛑 Gracefully shutting down server...');
+      server.close(async () => {
+        await db.end();
+        console.log('✅ Database connections closed.');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
+  }
 }
 
-admin.initializeApp({
-  credential: firebaseCredential,
-});
+if (require.main === module) {
+  startServer();
+}
 
-// Database Connection Pool (MySQL with automatic Keep-Alive & SQLite fallback)
-const pool = require('./db');
-// Verify Firebase Token Middleware
-const verifyToken = async (req, res, next) => {
-  const token = req.headers.authorization?.split('Bearer ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-// Import route files
-const mentorRoutes = require('./routes/mentorRoutes')(pool);
-const studentRoutes = require('./routes/studentRoutes')(pool);
-
-// Use routes
-app.use('/api/mentor', mentorRoutes); 
-app.use('/api/student', studentRoutes); // Temporarily disabled auth for testing
-
-// Register mentor (no auth required)
-app.post('/api/auth/register-mentor', async (req, res) => {
-  try {
-    const { firebase_uid, name, email } = req.body;
-    await pool.execute(
-      'INSERT INTO mentors (firebase_uid, name, email) VALUES (?, ?, ?)',
-      [firebase_uid, name, email]
-    );
-    res.status(201).json({ message: 'Mentor registered successfully' });
-  } catch (error) {
-    console.error('Error registering mentor:', error);
-    res.status(500).json({ error: 'Failed to register mentor' });
-  }
-});
-
-// Start server
-app.get('/', (req, res) => {
-  res.send('🚀 Backend is running successfully!');
-});
-app.get('/test-db', async (req, res) => {
-  try {
-    const [rows] = await pool.execute('SELECT 1');
-    res.json({ success: true, message: 'DB connected!' });
-  } catch (error) {
-    res.json({ success: false, error: error.message });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🔗 API available at http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await pool.end();
-  process.exit(0);
-});
+module.exports = app;
